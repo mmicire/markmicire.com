@@ -1,0 +1,6 @@
+.DS_Store
+*.swp
+# build artifacts if you keep your TSV/script in here too
+*.pyc
+__pycache__/
+

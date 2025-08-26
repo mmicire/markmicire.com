@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<base target="_blank">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark">
+<title>Mark J Micire</title>
+<style>
+  :root {
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+
+    /* Screen + print sizing */
+    --font-size: 14px;
+    --line-height: 1.5;
+    --print-font-size: 11pt;
+
+    /* Column widths */
+    --three-left: 120px; /* label */
+    --three-mid: 555px;  /* main */
+
+    /* Title spacing */
+    --space-before-title: 35px;
+    --space-after-title: 50px;
+
+    /* Chevron tweak */
+    --fold-chev-nudge: -5px;
+
+    /* Section separator */
+    --row-sep: 0;
+    /* --row-sep: 1px solid #ddd; */
+
+    /* Debug */
+    --debug-outline: none; /* e.g., 1px dashed #ccc */
+    /* --debug-outline: 1px solid #ccc; */
+
+    /* --- Light palette (defaults) --- */
+    --bg: #ffffff;
+    --fg: #111111;
+    --muted: #6b7280;      /* subtle text (meta) */
+    --border: #e5e7eb;     /* dividers */
+    --link: #0645ad;       /* accessible blue */
+    --link-hover: #0b5bd3;
+    --chev: #555555;       /* details chevron */
+  }
+
+  body{
+    font-family: var(--font-sans);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    margin: 0;
+    padding: 0;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* palette hooks */
+    background: var(--bg);
+    color: var(--fg);
+  }
+
+  a{
+    text-decoration: none;
+    color: var(--link);
+  }
+  a:hover,
+  a:focus{
+    text-decoration: underline;
+    color: var(--link-hover);
+  }
+
+  #container { width: 800px; margin: 0 auto; }
+  /* Allow horizontal scroll on narrow screens so grid never stacks */
+  #content { padding-bottom: 50px; overflow-x: visible; }
+
+  .title { font-size: xx-large; font-weight: bold; margin: var(--space-before-title) 0 var(--space-after-title); }
+  .subtitle { font-size: large; font-weight: bold; margin: 4px 0 16px; }
+
+  /* === Grid Entry with Row-Pair Pattern === */
+  .entry {
+    display: grid;
+    grid-template-columns: var(--three-left) var(--three-mid) minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 15px;
+    align-items: start;
+    margin: 0 0 14px 0;
+    border-bottom: var(--row-sep);
+    padding-bottom: 8px;
+    min-width: 0;
+  }
+
+  /* Basics */
+  .entry > * { min-width: 0; outline: var(--debug-outline); }
+  .label     { grid-column: 1; font-weight: bold; }
+  .line-main { grid-column: 2; }
+  .line-meta { grid-column: 3; text-align: right; justify-self: end; font-style: italic; color: var(--muted); }
+  .desc      { grid-column: 2 / -1; }
+
+  /* Two-column variant (entire section has no meta) */
+  .entry.entry--two { grid-template-columns: var(--three-left) minmax(0,1fr); }
+  .entry.entry--two .line-main { grid-column: 2; }
+  .entry.entry--two .desc { grid-column: 2; }
+  .entry.entry--two .line-meta { display: none; }
+
+  /* Paragraph tidy */
+  .entry p { margin: 0 0 8px; }
+  .line-meta p { margin: 0; }
+
+  /* Collapsible blocks (no JS) */
+  details.fold { grid-column: 2 / -1; margin-top: 6px; border-left: 2px solid var(--border); padding-left: 10px; }
+  details.fold > summary {
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none; /* hide default marker in Firefox */
+  }
+  details.fold > summary::-webkit-details-marker { display: none; } /* hide WebKit marker */
+  details.fold > summary .chev::before {
+    content: "▸";
+    display: inline-block;
+    line-height: 1;
+    transform: translateY(var(--fold-chev-nudge));
+    transition: transform .2s;
+    color: var(--chev);
+  }
+  details.fold[open] > summary .chev::before { transform: translateY(var(--fold-chev-nudge)) rotate(90deg); }
+  details.fold > .fold-body { margin-top: 6px; }
+
+  /* Rows inside the collapsible body */
+  .fold-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto; /* meta column hides if absent */
+    column-gap: 8px;
+    align-items: start;
+    margin-top: 6px;
+  }
+  .fold-item:first-child { margin-top: 0; }
+  .fold-item .fold-main { min-width: 0; }
+  .fold-item .fold-meta { text-align: right; white-space: nowrap; margin-left: 8px; color: var(--muted); }
+
+  /* Lists inside hidden rows */
+  .fold-item ul, .fold-item ol { margin: 0 0 6px; padding-left: 1.2em; }
+  .fold-item li { margin: 0 0 4px; }
+
+  /* --- Dark mode override --- */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg: #0b0f14;      /* near-black with a hint of blue */
+      --fg: #e5e7eb;      /* soft white */
+      --muted: #9aa3af;   /* cool gray for meta */
+      --border: #2a2f3a;  /* subtle divider */
+      --link: #8ab4f8;    /* accessible blue */
+      --link-hover: #a8c7fa;
+      --chev: #cbd5e1;
+    }
+    /* optional: quiet the left label slightly in dark mode */
+    .label { color: #d1d5db; }
+  }
+
+  /* PRINT: show only what's currently expanded */
+  @media print{
+    :root {
+      --space-before-title: 0;
+      --space-after-title: 10px;
+      --print-font-size: 10.0pt;
+      --three-left: 100px;  /* was 110px */
+      --three-mid: 575px;   /* keep or bump if needed */
+  
+    }
+    html, body { font-size: var(--print-font-size); line-height: 1.35; }
+    
+    .entry { break-inside: auto; page-break-inside: auto; } /* allow entries to split across pages */
+    .desc, .line-main, .line-meta, .fold-item { break-inside: avoid; } /* still avoid awkward splits inside tiny blocks */
+    details.fold{ border-left:0; padding-left:0; }
+    details.fold > summary { display:none; }
+    details.fold[open]  > .fold-body { display:block !important; }
+    details.fold:not([open]) > .fold-body { display:none !important; }
+    a{ text-decoration: none; color: black; }
+    .pb { break-before: page; page-break-before: always; }     /* legacy fallback */
+    .pb-after { break-after: page; page-break-after: always; } /* Force a new page AFTER this element */
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; } /* Keep this element together on one page (use sparingly) */
+    p { orphans: 3; widows: 3; }. /* Optional: nicer paragraphs */
+
+       
+              
+    /* --- Choose ONE --- */
+    /* @page { size: A4; margin: 14mm 14mm 16mm; } */
+    /* @page { size: 8.5in 11in; margin: 0.6in 0.6in 0.7in; } */
+  }
+</style>
+
+
+</head>
+<body>
+  <div id="container">
+    <main id="content">
+      <h1 class="title">Mark J Micire</h1>
+      <section aria-labelledby="profile">
+        <div class="entry entry--two" id="profile">
+          <div class="label">Profile</div>
+          <div class="line-main"><p>Mark is a communicator, leader, consummate builder, and lifelong hacker with 20+ years experience in computer science, networking, information security, human-computer interface, robotics, artificial intelligence, and mission-critical systems across commercial, space, defence, and energy sectors. Proven ability to rapidly architect and deliver scalable solutions that align emerging technology with strategic outcomes. Deep experience in industry engagement and digital transformation, including cloud robotics, distributed autonomy, and automation in extreme environments.  He has been active in the cyber-security community for over 35 years. For 25 years, he demonstrated his passion for developing solutions for social challenges through his commitment as a first responder and technical rescue specialist.</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="experience">
+        <div class="entry" id="experience">
+          <div class="label">Experience</div>
+          <div class="line-main"><strong>Space Systems Principal Engineer, Rover Lead</strong><br>Fugro, Perth, WA, Australia</div>
+          <div class="line-meta"><p>2023 - Present</p></div>
+          <div class="desc">Principal Engineer for the Space Automation AI and Robotics Control (SpAARC) Complex. Leading full life cycle development from proposal through delivery, aligning team-developed system-engineered solutions with mission outcomes across the space, mining, and defence sectors.<br><br>Rover Lead selected to direct a geographically distributed <a href="https://www.abc.net.au/news/2024-08-16/second-australian-lunar-rover-prototype-unveiled-race-to-moon/104227920">lunar rover</a> team through a successful preliminary design review as a candidate for the Australian Space Agency's <a href="https://www.youtube.com/watch?v=18dsiMe5mG8">Trailblazer</a> program. Responsible for complete system architecture, performance and functional requirements, integration, testing, and operational concept development aligned with NASA and ASA standards.</div>
+          <div class="line-main"><strong>Head of Technology Development</strong><br>Woodside Energy, Perth, WA, Australia</div>
+          <div class="line-meta"><p>2019 - 2023</p></div>
+          <div class="desc">Head of Technology Development leading the research, development, adoption, and operating models for technologies at Woodside Energy. Demonstrated cloud-integrated, digital twin-enabled robotics solutions, <a href="https://www.youtube.com/watch?v=Z7Yr5Qh5K5w&amp;t=1113s">showcased</a> by AWS as a case study, driving operational transformation in the energy sector. Additional areas of technology portfolio management included advanced 3D additive manufacturing, corrosion management, offshore robotic inspection, offshore uncrewed helicopters, drone inspection, quadruped robots, and humanoid-inspired platforms.<br><br>Transformed development team from small R&amp;D group to implementation-focused, customer-centric engineering team. Aligned portfolio deliverables with strategic business value, leveraging Amazon Working Backwards and similar methodologies. Developed partner ecosystems spanning commercial, academic, and government sectors to accelerate evolution across the spectrum of technical maturities.</div>
+          <div class="line-main"><strong>Group Lead, Project Manager, Senior Research Scientist</strong><br>Intelligent Systems, NASA Ames Research Center<br>National Aeronautics and Space Administration (NASA), Mountain View, CA, US</div>
+          <div class="line-meta"><p>2016 - 2019</p></div>
+          <div class="desc">Group lead for the Intelligent Robotics Group, managing a $8.5M annual portfolio of 20+ research programs, leading a 35-person team in the delivery of autonomous systems, ground software, and spacecraft software. This portfolio represented a portion of NASA's leading edge in <a href=https://www.youtube.com/watch?v=YvgFhNwD2Us>robotics and autonomy</a> research, including satellites, <a href=https://en.wikipedia.org/wiki/K-10_robot>rovers</a>, machine learning, autonomous systems, human-robot interaction, self-driving automobiles, and robotic design. Research directly supported open source <a href=https://github.com/visionworkbench/visionworkbench>software</a>, flight projects to the International Space Station, on-earth field tests, and first-principles laboratory research. Drove multi-partner engagements to align technical roadmaps with strategic objectives in aerospace and defence. Actively and aggressively developed and pitched programs at NASA Headquarters based on new opportunities related to NASA's mission.<br><br>Project Manager for the Distributed Spacecraft Autonomy (DSA) project, which in 2024 provided an in-orbit technical demonstration of the first fully autonomous <a href="https://cerebral-overload.com/2025/02/nasa-demonstrates-software-brains-shared-across-satellite-swarms/">distributed</a> space mission in a highly scalable and reliable manner. The completed mission provided five <a href="https://digitalcommons.usu.edu/smallsat/2024/all2024/31/">industry firsts</a> and has become a reference mission for future multi-billion-dollar NASA investments.</div>
+          <div class="line-main"><strong>Program Manager</strong><br>Tactical Technology Office (TTO) and Defense Sciences Office (DSO)</strong><br>Defense Advanced Research Projects Agency (DARPA), Arlington, VA, US</div>
+          <div class="line-meta"><p>2013 - 2016</p></div>
+          <div class="desc">Exclusively-selected to join DARPA as one of approximately 100 Program Managers responsible for domain-wide thought leadership and executing the agency's $3 billion in annual funding, catalysing development of technologies that maintain and advance capabilities and technical superiority of the U.S. military.<br><ul><li><strong>Fast Lightweight Autonomy (FLA)</strong> program to develop an entirely <a href="https://www.youtube.com/watch?v=HvkxM8xz0Vo"> new class</a> of <a href="https://www.youtube.com/watch?v=LaXc-jmN89U">high-speed</a>, safe, and efficient algorithms for Unmanned Air Vehicle (UAV) to enable twenty meters per second flight in cluttered environments</a> and enable robots to operate at tactically relevant speeds.</li><li><strong>Manufacturing Experimentation and Outreach (MENTOR2)</strong> demonstrated training, design, and prototyping tools leveraging high-technology systems, including 3D printing and rapid prototyping, enabling competence in the maintenance and adaptation of such systems for soldiers.</li><li><strong>Robotics Fast Track (RFT)</strong> program enabled rapid, cost-effective development of <a href="http://makezine.com/2015/11/25/pay-attention-darpas-new-robotics-award/">robotics capabilities</a> designed to respond to and anticipate quickly evolving needs in space, maritime, ground, and air operations. The program engaged highly agile organisations and individuals who traditionally do not work with the U.S. government.</li><li><strong>Numerous "seedling" investigations</strong>, including optimising workload for human performance assessment and modelling, robotic swarm algorithm development, counter-uncrewed air systems (C-UAS), violent crowd behaviour prediction, and <a href="https://sri-csl.github.io/secure_ros/">Secure ROS</a> development. Additional details on seedling investigations are available upon request.</li></ul>Served as a senior government official and advisor to the White House and Department of Homeland Security (DHS) on urgent issues of national security, strategic, technological, and partnership development.</div>
+          <div class="line-main"><strong>Research Scientist, Project Lead, Engineering Manager</strong><br>Carnegie Mellon University, Mountain View, CA, US</div>
+          <div class="line-meta"><p>2010 - 2013</p></div>
+          <div class="desc">Project Lead for the Intelligent Robotics Group Human Exploration and Telerobotics <a href="https://www.youtube.com/watch?v=JvZ1sYs0kuo">Smart-SPHERES</a> project. Led team that modified and certified the first space-rated consumer smartphone and delivered it to the International Space Station (ISS) on the final <a href="https://www.youtube.com/watch?v=REsEgrhmMjc">Space Shuttle flight</a>, which enabled control of an uncrewed free-flying spacecraft. Managed flight certification, procedures, and all technical aspects of the program. Mark was the first non-flight-certified operator from Houston, Mission Control, to control uncrewed free-flying spacecraft.  The project became the precursor to the highly successful <a href="https://www.youtube.com/watch?v=hk-1j3sXTqA">Astro-Bee</a> flight program.<br><br>Engineering Manager for the International Space Station (ISS) Synchronized Position Hold, Engage, Reorient Experimental Satellites (SPHERES) National Laboratory. Managed multiple customer-facing teams to directly support flight payload operations and ground testing of ISS experiments at the SPHERES testing facility. Executed technical planning, resource management, facility procedures, vendor contracts, Space Act agreements, and transition of the SPHERES ISS facility from the Massachusetts Institute of Technology and Air Force to NASA Ames.</div>
+          <details class="fold desc">
+            <summary><span class="chev"></span> <strong>Additional experience and skills available.</strong></summary>
+            <div class="fold-body">
+              <div class="fold-item">
+                <div class="fold-main"><strong>Chief Technology Officer</strong><br>Pre-Script, LLC</a>, Mountain View, CA</p></div>
+                <div class="fold-meta"><p>2018 - 2021</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Chief Technical Officer, overseeing all company technologies and  digital platforms' evaluation, deployment, testing, adoption, and sustainability.  Deployed and maintained all online digital education product platforms, including <a href="https://www.pre-script.com/">website</a>, point of sale, product delivery, mailing lists, analytics, coordination, and support.<br><br>Planned and executed scope creating custom middleware connecting the Squarespace point-of-sale platform to the MyPTHub exercise product delivery platform. Required reverse engineering of an undocumented RESTful API. Performed customer migration, training, and documentation.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Graduate Researcher</strong><br>UMass Lowell Robotics Lab, University of Massachusetts Lowell, Lowell, MA</div>
+                <div class="fold-meta"><p>2006 - 2010</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Conducted foundational and patented research focused on <a href="https://www.youtube.com/watch?v=gVn-yWou-8A">multi-touch computer interfaces</a>, <a href=https://www.youtube.com/watch?v=uyaXGPd_Whw">human-computer interaction</a>, <a href="https://www.youtube.com/watch?v=R2PJdPiQoY8">human-robot interaction</a>,  <a href="https://www.youtube.com/watch?v=yoC7lfh1B78">robotics for search and rescue</a>, and assistive robot technologies for people with disabilities.
+
+Designed and conducted human subject experiments, authored federal and private sector grant solicitations, research publications, and managed laboratory research projects.  Grant and equipment sponsors included the National Institute of Standards and Technology, the National Science Foundation, Mitsubishi Electric Research Laboratories, 3M, and Microsoft Research.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Research Associate</strong><br>Intelligent Robotics Group, NASA Ames Research Center<br>National Aeronautics and Space Administration, Mountain View, CA</div>
+                <div class="fold-meta"><p>Summer 2008</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Received a full scholarship to perform research under the Education Associates Program.  Developed GeoCam Java 2 Micro Edition (J2ME) smartphone application for emergency responders. Assisted in the 2008 Ikhana Predator Wildfire Flight Mission over California, providing ground support to teams involved in the Big Sur wildfire response.</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>President and CEO</strong><br>American Standard Robotics, Inc., St. Petersburg, FL</div>
+                <div class="fold-meta"><p>2002 - 2007</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Founded and launched the first company to design, manufacture, sell, and deploy <a href="https://www.nbcnews.com/id/wbna9240563">robotic reconnaissance equipment</a> specifically designed to search for survivors in partially collapsed structures.  Formulated multiple written business plan strategies, managed legal filings, headed successful capital fundraising, and built a multi-disciplinary team of customer-focused, field-ready roboticists.<br><br>Developed robust equipment including advanced and bespoke crawlers and underwater remotely operated vehicles for industrial, maritime, fire rescue, insurance investigation, and energy markets.  Engineered systems</strong> to inspect and non-destructively test in potentially flammable, explosive, and confined spaces with and without human co-location, such as pipelines and collapsed structures.  <br><br>Managed all aspects of development</strong> of robot product design, mechanical, electrical, and software for outsourced manufacturing with leading robot manufacturers.  Structured the scope</strong> and design of company branding, marketing, and procedural documentation.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Graduate Research Assistant</strong><br>Center for Robot-Assisted Search and Rescue, University of South Florida, Tampa, FL</div>
+                <div class="fold-meta"><p>1999 - 2003</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Served as search and rescue robot technician, operator, and trainer.  Organised response team equipment and response capabilities.  Mastered operating, maintaining, modifying, and repairing numerous robot platforms, including Inuktun Services, iRobot, RWI, ActivMedia, Khepera, and Nomadic robots.  Grant sponsors included the National Science Foundation, DARPA TTO for Future Combat Systems, DARPA ATO for Tactical Mobile Robots, SAIC, Office of Naval Research, and Center for Disaster Management and Humanitarian Assistance.</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Adjunct Faculty, Instructor</strong><br>Polk Community College, Lakeland, FL</div>
+                <div class="fold-meta"><p>1999 - 2000</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Taught PC Troubleshooting &amp;Repair: CET 1173C-5930 classes based on A+ certification curriculum. Held office hours and appointments for students. Created and maintained class web pages for posting assignments, student resources, testing samples, and answers. Planned and supervised half-day laboratory exercises.</p>
+<p>100% pass rate on A+ certification for all students who participated in testing.</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Independent Consultant</strong></div>
+                <div class="fold-meta"><p>1999 - 2011</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Provided technical, security, and business strategy consulting services to government, public, and private institutions.  Examples include:<br><ul><li><strong>2010: Knowledge Bridge International, Herndon, VA.</strong> Subject matter expert and technical lead on a contract for the Naval Air Systems Command that leveraged novel applications of mobile phone technologies for military intelligence operations.</li><li><strong>2009: Semantic Research, San Diego, CA.</strong> Designed and manufactured the field enclosure for the Barracuda radio monitoring system deployed worldwide.</li><li><strong>2006: iRobot, Burlington, MA.</strong> Evaluated and redesigned the human-robot interaction for the PackBot Explosive Ordinance robot operator control unit leveraging game-controller input.</li><li><strong>2006: Center for Strategic Health Innovation / University of South Alabama, Mobile, AL.</strong> Provided red-team external security audits of the Alabama Incident Management System (AIMS) and connected networks. Demonstrated security problems using non-destructive methods.</li></ul></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Computer and Network Technician</strong><br>ComputerMan!, Lakeland, FL</div>
+                <div class="fold-meta"><p>1997 - 1999</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Mobile, a self-managed technician for businesses requiring secure network architecture design, structured cabling installation, and sustained network management. Interacted with customers regarding server maintenance and computer repair.  Launched intrusive and non-intrusive penetration testing for business security auditing. Provided post-hoc forensic analysis of criminally compromised servers.</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Computer and Network Technician</strong><br>POLK COMMUNITY COLLEGE, Winter Haven, FL</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Supported a multi-platform, multi-protocol, 1200+ user network.  Implemented network architecture design transitions, including a complete campus restructuring and IP renumbering.  Structured technical aspects of firewall design and implementation.</p></div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section aria-labelledby="appointments">
+        <div class="entry" id="appointments">
+          <div class="label">Appointments</div>
+          <div class="line-main"><strong>Advisory Board Member</strong>, <a href="https://www.lexchip.ai/">LexChip</a> Perth, Western Australia</div>
+          <div class="line-meta"><p>2025 - Present</p></div>
+          <div class="line-main"><strong>Board of Directors</strong>, <a href="https://gravitycentre.com.au/">The Gravity Discovery Centre</a>, Yeal, Western Australia</div>
+          <div class="line-meta"><p>2024 - 2025</p></div>
+          <div class="line-main"><strong>Industry Advisory Boards</strong>, Curtin University,  Bentley, Western Australia<br><a href="https://www.curtin.edu.au/about/learning-teaching/science-engineering/school-of-electrical-engineering-computing-and-mathematical-sciences/">School of Electrical Engineering, Computing, and Mathematical Sciences</a><br /><a href="https://www.curtin.edu.au/about/learning-teaching/science-engineering/school-of-civil-mechanical-engineering/">School of Civil, and Mechanical Engineering</a></div>
+          <div class="line-meta"><p>2024 - Present</p></div>
+          <div class="line-main"><strong>Adjunct Senior Research Fellow</strong>, University of Western Australia, Perth, Western Australia<br><a href="https://www.icrar.org/">International Centre for Radio Astronomy Research</a>,</div>
+          <div class="line-meta"><p>2023 - Present</p></div>
+          <div class="line-main"><strong>Adjunct Professor</strong>, Queensland University of Technology, Brisbane, Queensland,<br>Science and Engineering Faculty, School of Electrical Engineering &amp; Robotics</div>
+          <div class="line-meta"><p>2021 - Present</p></div>
+          <details class="fold desc">
+            <summary><span class="chev"></span> <p>Additional professional appointments available.</p></summary>
+            <div class="fold-body">
+              <div class="fold-item">
+                <div class="fold-main"><strong>Industry Advisory Board,</strong> Monash University, Melbourne, Victoria<br><a href="https://www.monash.edu/engineering/departments/mechanical/our-people/mechatronics-robotics-industry-advisory-board">Mechanical &amp; Aerospace Engineering</a></div>
+                <div class="fold-meta"><p>2021 - 2023</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><strong>Board of Directors, Secretary,</strong> <a href="https://www.sprintrobotics.org/">SPRINT Robotics</a>, Hilversum, North Holland, Netherlands</div>
+                <div class="fold-meta"><p>2020 - 2024</p></div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section aria-labelledby="education">
+        <div class="entry" id="education">
+          <div class="label">Education</div>
+          <div class="line-main"><strong>Doctor of Philosophy in Computer Science</strong><br>University of Massachusetts Lowell, Dept. of Math and Science, Lowell, MA.</div>
+          <div class="line-meta"><p>2010</p></div>
+          <div class="desc">Focus: Robotics, multi-touch interfaces, search and rescue, human-robot interaction, UI design<br>Dissertation: <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2010PHDThesis.pdf"><em>"Multi-Touch Interaction for Robot Command and Control."</em></a><br>Thesis Advisor: <a href="https://en.wikipedia.org/wiki/Holly_Yanco">Dr Holly A. Yanco</a></div>
+          <div class="line-main"><strong>Nationally Certified Fire Fighter I &amp; II</strong><br>Hillsborough Community College, Fire Fighter Academy, Tampa, FL.</div>
+          <div class="line-meta"><p>2004</p></div>
+          <div class="line-main"><strong>Bachelor's and Master's of Science in Computer Science</strong><br>University of South Florida, Dept. of Computer Science and Engineering, Tampa, FL.</div>
+          <div class="line-meta"><p>1999, 2002</p></div>
+          <div class="desc">Focus: Robotics, search and rescue, human-robot interaction, human perception, artificial intelligence<br>Dissertation: <em><a href="http://www.cs.uml.edu/~mmicire/publications/Micire2002Thesis.pdf">"Analysis of the Robotic-Assisted Search and Rescue Response to the World Trade Center Disaster."</em></a></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="patents">
+        <div class="entry" id="patents">
+          <div class="label">Patents</div>
+          <div class="line-main">Mccann, Eric, Mark J. Micire, Adam D. Norton, Holly A. Yanco. <a href="https://patentimages.storage.googleapis.com/a1/d5/fb/ab43f4b1fc4b17/US9013430.pdf">"United States Patent: 9,013,430 - Hand and finger registration for control applications"</a></div>
+          <div class="line-meta"><p>2015</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="security-credentials">
+        <div class="entry" id="security-credentials">
+          <div class="label">Security Credentials</div>
+          <div class="line-main"><p>Cleared for US Top Secret information and granted access to Sensitive Compartmented Information based on a single scope background investigation renewed on April 2019.</p></div>
+          <div class="line-meta"><p>2010 - 2019</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="publications">
+        <div class="entry entry--two" id="publications">
+          <div class="label">Publications</div>
+          <div class="line-main">Mark Micire, Eric McCann, Munjal Desai, Katherine M. Tsui, Adam Norton, and Holly A. Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2011Tepra.pdf"><em>"Hand and Finger Registration for Multi-Touch Joysticks on Software-Based Operator Control Units,"</em></a> Proceedings of the IEEE International Conference on Technologies for Practical Robot Applications (TEPRA), Woburn, MA, April 2011.</div>
+          <div class="desc">Mark Micire. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2008JFR.pdf"><em>"Evolution and Field Performance of a Rescue Robot,"</em></a> The Journal of Field Robotics, Special Issue on Search and Rescue Robots, Volume 25 Issue 1-2, pp. 17-30.</div>
+          <details class="fold desc">
+            <summary><span class="chev"></span> <p>Additional publications and writing samples available.</p></summary>
+            <div class="fold-body">
+              <div class="fold-item">
+                <div class="fold-main">Lanssie Ma, Terrance Fong, Mark J. Micire, Yun Kyung Kim and Karen Feigh <a href="http://www.fsr.ethz.ch/papers/FSR_2017_paper_57.pdf"><em>"Human-Robot Teaming: Concepts and Components for Design,"</em></a> Proceedings of the 11th Conference on Field and Service Robotics, ETH Zurich, December 2017.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Terrence Fong, Mark Micire, Ted Morse, Eric Park, Chris Provencher, Ernest Smith, Vinh To, R. Jay Torres, D. W. Wheeler, and David Mittman. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2013AIAASpace.pdf"><em>"Smart SPHERES: a Telerobotic Free-Flyer for Intravehicular Activities in Space,"</em></a> Proceedings of the AIAA SPACE 2013 Conference and Exposition, AIAA SPACE Forum, 2013.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Terrance Fong, Chris Provencher, Mark Micire, Myron Diftler, Reginald Berka, Bill Bluethmann, and David Mittman. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2012IEEEAero.pdf"><em>"The Human Exploration Telerobotics project: objectives, approach, and testing,"</em></a> Proceedings of the 2012 IEEE Aerospace Conference, March 3-10, 2012.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Terrence Fong, Reginald Berka, Maria Bualat, Myron Diftler, Mark Micire, David Mittman, Vytas SunSpiral, and Chris Provencher. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2012GLEX.pdf"><em>"The Human Exploration Telerobotics Project,"</em></a> Global Space Exploration Conference, Washington, DC, January 2, 2012.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Mark Micire, Munjal Desai, Jill L. Drury, Eric McCann, Adam Norton, Katherine M. Tsui, and Holly A. Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2011IUI.pdf"><em>"Design and Validation of Two-Handed Multi-Touch Tabletop Controllers for Robot Teleoperation,"</em></a> Proceedings of the International Conference on Intelligent User Interfaces, Palo Alto, CA, February 13-16, 2011.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jill L. Drury, Mark Micire, and Holly A. Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2010JEM.pdf"><em>"New Technology Applications in Hazardous Materials Operations,"</em></a> Journal of Emergency Management, pp. 55-71, September/October 2010.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Brenden Keyes, Mark Micire, Jill Drury, and Holly Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2010HRIInTech.pdf"><em>"Improving Human-Robot Interaction through Interface Evolution,"</em></a> Human-Robot Interaction, Daisuke Chugo (Ed.), INTECH, 2010.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Mark Micire, Munjal Desai, Amanda Courtemanche, Katherine M. Tsui, and Holly A. Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2009TableTop.pdf"><em>"Analysis of Natural Gestures for Controlling Robot Teams on Multi-touch Tabletop Surfaces,"</em></a> ACM International Conference on Interactive Tabletops and Surfaces, Banff, Alberta, November 23 - 25, 2009.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Mark Micire, Jill L. Drury, Brenden Keyes, and Holly Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2009IUI.pdf"><em>"Multi-Touch Interaction for Robot Control,"</em></a> in International Conference on Intelligent User Interfaces (IUI), Sanibel Island, Florida, February 8 - 11, 2009.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jill L. Drury, Jonathan Arambula, Sarah Kuhn, Mark Micire, and Holly Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2008HomelandSecurity.pdf"><em>"Identifying Technology Gaps in Hazardous Materials Operations,"</em></a> in Proceedings of the IEEE International Conference on Technologies for Homeland Security, Waltham, MA, May 2008.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Holly Yanco, Mark Micire, Jill Drury, and Jennifer Casper, <em>"Improving Command and Control: How New Interaction Methods Will Help,"</em> University of Massachusetts Lowell White Paper, August 2008.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Mark Micire, Jill L. Drury, Brenden Keyes, Holly Yanco, and Amanda Courtemanche. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2008HRI.pdf"><em>"Performance of Multi-Touch Table Interaction and Physically Situated Robot Agents,"</em></a> Poster presentation at the 3rd ACM/IEEE International Conference on Human-Robot Interaction, Amsterdam, March 2008.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Amanda Courtemanche, Mark Micire and Holly Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2007Tabletop.pdf"><em>"Human-Robot Interaction using a Multi-Touch Display,"</em></a> 2nd Annual IEEE Tabletop Workshop, <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2007TableTopPoster.pdf">poster presentation</a>, October 2007.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Mark Micire, Martin Schedlbauer, and Holly Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2007AMCIS.pdf"><em>"Horizontal Selection: An Evaluation of a Digital Tabletop Input Device,"</em></a> 13th Americas Conference on Information Systems, Keystone, Colorado, August 9-12, 2007.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Matt Bailey, Andrew Chanler, Bruce Maxwell, Mark Micire, Katherine Tsui, and Holly Yanco. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2007ICORR.pdf"><em>"Development of Stereo Vision-Based Navigation for a Robotic Wheelchair,"</em></a> in Proceedings of the International Conference on Rehabilitation Robotics (ICORR), Noordwijk, the Netherlands, June 12, 2007.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Matt Bailey, Andrew Chanler, Bruce Maxwell, Mark Micire, Katherine Tsui, and Holly Yanco, "Development of Vision-based Navigation for a Robotic Wheelchair," in IEEE 10th International Conference on Rehabilitation Robotics (ICORR), Jun. 2007, pp. 951-957.</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">William Bracken, and Mark Micire. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2006SFaR.pdf"><em>"Developing Field Protocols For Using Robots To Supplement Forensic Investigations,"</em></a> ACSE Eleventh International Conference Structural Faults + Repair, Edinburgh, Scotland, UK, June 2006.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jennifer Casper, Mark Micire, Brian Minten, and Whitney Howell, <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2005WMSCI.pdf"><em>"Requirements of a Standard Robot Platform for Unstructured Environment Research,"</em></a> Proceedings of the 9th World Multi-Conference on Systemics, Cybernetics and Informatics, Orlando, FL, July 2005.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">William Bracken, Mark Micire, and Jennifer Casper. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2005CITC.pdf"><em>"Developing Field Protocols for Using Robots to Supplement Forensic Investigations,"</em></a> Third International Conference on Construction in the 21st Century (CITC-III) Proceedings. Athens, Greece, 2005.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Bruce A. Maxwell, William Smart, Adam Jacoff, Jennifer Casper, Brian Weiss, Jean Scholtz, Holly Yanco, Mark Micire, Ashley Stroupe, Dan Stormont, and Tom Lauwers. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2004AIMag.pdf"><em>"2003 AAAI Robot Competition and Exhibition,"</em></a> AI Magazine, 25(2), pp. 68-80, Summer 2004.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jennifer Casper, Mark Micire, and Robin Gang. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2004ICCE.pdf"><em>"Search and Rescue Robotics,"</em></a> 3rd International Conference on Continental Earthquakes, Beijing, China, July 2004.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jennifer Casper and Mark Micire. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2003AIMag.pdf"><em>"AAAI 2002 Robot Rescue,"</em></a> AI Magazine, April 2003.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jennifer Casper, Mark Micire, Jeff Hyams, and Robin Murphy. <em>"A Case Study of How Mobile Robot Competitions Promote Research,"</em> RoboCup 2001: Robot Soccer World Cup V, Springer, A. Birk, S. Coradeschi, S. Tadokoro, editors, 2002</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Brian Minten, Robin Murphy, Jeff Hyams, and Mark Micire. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2001RA.pdf"><em>"Low Order Complexity Vision-Based Docking,"</em></a> IEEE Transactions on Robotics and Automation, Volume 17, pp. 922-930, December 2001.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Robin Murphy, Jennifer Casper, and Mark Micire. <em>"Potential Tasks and Research Issues of Mobile Robots in RoboCup Rescue,"</em> RoboCup-2000: Robot Soccer World Cup IV, Springer Verlag, Berlain, Peter Stone, Tucker Balch, Gerhard Kraetszchmar, editors, pp. 339-344, 2001.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jeff Hyams, Brian Minten, Mark Micire, and Robin Murphy. <em>"Vision-based docking under variable lighting conditions,"</em> SPIE Ground Vehicle Technology II, Orlando, FL, April 2000.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Robin Murphy,  Jennifer Casper, Mark Micire, and J. Hyams, "Mixed-initiative Control of Multiple Heterogeneous Robots for Urban Search and Rescue," in proceedings of the IEEE Transactions on Robotics and Automation, 2000.</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main"><p>Brian Minten, Robin Murphy, J. Hyams, and Mark Micire, "A Communication-free Behavior for Docking Mobile Robots," Distributed autonomous robotic systems 4, p. 357, 2000.</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Robin Murphy, Jennifer Casper, Mark Micire, and Jeff Hyams. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2000PERMIS.pdf"><em>"Assessment of the NIST Standard Test Bed for Urban Search and Rescue,"</em></a> National Institute of Standards and Technology Workshop on Performance Metrics for Intelligent Systems (PerMIS), 2000.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Jennifer Casper, Mark Micire, and Robin Murphy. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2000SPIE.pdf"><em>"Issues in Intelligent Robots for Search and Rescue,"</em></a> SPIE Ground Vehicle Technology II, Orlando, FL, April 2000.</div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Robin Murphy, Jennifer Casper, Jeff Hyams, Mark Micire, and Brian Minten. <a href="http://www.cs.uml.edu/~mmicire/publications/Micire2000IECON.pdf"><em>"Mobility and Sensing Demands in USAR,"</em></a> Session on Rescue Engineering, IECON-2K, Nagoya, Japan, October 25-28, 2000</div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section aria-labelledby="popular-press">
+        <div class="entry" id="popular-press">
+          <div class="label">Popular Press</div>
+          <div class="line-main">TEDx Kings Park - Moon - <a href="https://www.youtube.com/watch?v=n_2BlWXedGY"><em>"How to build a lunar rover... and not kill your car"</em></a></div>
+          <div class="line-meta"><p>2024</p></div>
+          <div class="line-main">National Public Radio - Science Friday - <a href="http://www.sciencefriday.com/segments/a-new-threat-to-cell-phone-videos/"><em>"A New Threat to Cell Phone Videos?"</em></a></div>
+          <div class="line-meta"><p>2016</p></div>
+          <div class="line-main">Wait, What? - <a href="https://youtu.be/-M8nO_vdUSc?si=I0Uk0UwiA6iAE__K&amp;t=534"><em>"9/11 Remembrance at DARPA's 'Wait, What?' Forum"</em></a></div>
+          <div class="line-meta"><p>2015</p></div>
+          <div class="line-main">Google Advanced Technology and Projects - <a href=https://www.youtube.com/watch?v=Vc5YyLl1Ksg>Project Tango: NASA SPHERES</a></div>
+          <div class="line-meta"><p>2014</p></div>
+          <div class="line-main">National Public Radio - Forum - <a href="https://www.kqed.org/forum/201303271000/are-robots-taking-a-toll-on-jobs"><em>"Are Robots Taking a Toll on Jobs?"</em></a></div>
+          <div class="line-meta"><p>2013</p></div>
+          <div class="line-main">Tech Talks at Google - <a href="https://youtu.be/qEaheYVf3U0?t=86"><em>"Smart SPHERES: Free-Flying Space Robots"</em></a></div>
+          <div class="line-meta"><p>2012</p></div>
+          <div class="line-main">Microsoft Research - <a href="https://www.youtube.com/watch?v=yoC7lfh1B78"><em>"Learn How Robots Can Help When Disaster Strikes"</em></a></div>
+          <div class="line-meta"><p>2011</p></div>
+          <details class="fold desc">
+            <summary><span class="chev"></span> <p>Additional popular press and media available.</p></summary>
+            <div class="fold-body">
+              <div class="fold-item">
+                <div class="fold-main">Latency2024 - <a href="https://www.youtube.com/watch?v=Z2Bxi3hkzDQ&t=637s"><em>"Latency Panel Discussion"</em></a></div>
+                <div class="fold-meta"><p>2024</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Saltology Podcast - <a href="https://www.youtube.com/watch?v=nzWWIxTmpmA"><em>"Saltology: Interview with Mark Micire"</em></a></div>
+                <div class="fold-meta"><p>2024</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Australian Federal Government - <a href="https://www.youtube.com/watch?v=qL6OVAdE_Lg"><em>"Global Australia Success Stories"</em></a></div>
+                <div class="fold-meta"><p>2022</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Let's Talk Robotics Podcast - <a href="https://open.spotify.com/episode/6ilXWHYJ97pvYkGDguMsXF?si=11ef86d288364cfb"><em>"Let's talk robotics with Dr Mark Micire"</em></a></div>
+                <div class="fold-meta"><p>2022</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">RX'D Radio Podcast - <a href="https://rxdradio.libsyn.com/e131"><em>"Clementina Russo, Mark Micire: How NASA Built Pre-Script"</em></a></div>
+                <div class="fold-meta"><p>2019</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Idea Machines Podcast - <a href="https://ideamachinespodcast.com/nasa-vs-darpa-with-mark-micire"><em>"NASA vs DARPA with Mark Micire"</em></a></div>
+                <div class="fold-meta"><p>2018</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Engadget - <a href="https://www.engadget.com/2016/02/12/darpa-fla-drone-flight/"><em>Watch DARPA's tiny drone do 45 MPH indoors, autonomously</em></a></div>
+                <div class="fold-meta"><p>2016</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Nature - <a href="http://www.nature.com/news/robotics-ethics-of-artificial-intelligence-1.17611"><em>"Robotics: Ethics of artificial intelligence"</em></a></div>
+                <div class="fold-meta"><p>2015</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Washington Post - <a href="https://www.washingtonpost.com/news/the-switch/wp/2014/12/30/dod-wants-to-build-drones-that-can-buzz-into-bad-guys-doorways/"><em>"DOD wants to build drones that can buzz into bad guys' doorways"</em></a></div>
+                <div class="fold-meta"><p>2014</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Ars Technica - <a href="http://arstechnica.com/gadgets/2013/03/how-nasa-got-an-android-handset-ready-to-go-into-space/"><em>"How NASA got an Android handset ready to go into space"</em></a></div>
+                <div class="fold-meta"><p>2013</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">CNET News - <a href="https://www.youtube.com/watch?v=cqFA1yZy7k4"><em>"New NASA satellites are powered by everyday items"</em></a></div>
+                <div class="fold-meta"><p>2013</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Fast Company - <a href="https://www.fastcompany.com/1665800/nasa-tests-helper-robots-inspired-by-star-wars-and-powered-by-android">NASA Tests Helper Robots Inspired By Star Wars And Powered By Android</a></div>
+                <div class="fold-meta"><p>2012</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">NASA ISS Update - <a href="https://www.youtube.com/watch?v=JvZ1sYs0kuo"><em>ISS Update: Smartphone SPHERE</em></a></div>
+                <div class="fold-meta"><p>2012</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">TechCrunch - <a href="http://techcrunch.com/2011/09/01/the-nexus-s-powers-nasas-lightsaber-sparring-spheres-in-space/"><em>"The Nexus S Powers NASA's Lightsaber Sparring Spheres, In Space"</em></a></div>
+                <div class="fold-meta"><p>2011</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Popular Science - <a href="http://www.popsci.com/technology/article/2010-08/new-interface-can-control-robot-swarms-touchscreen"><em>"Use Microsoft Surface to Control a Swarm of Robots With Your Fingertips"</em></a></div>
+                <div class="fold-meta"><p>2010</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">CNN - <a href="https://web.archive.org/web/20221115151037/http://edition.cnn.com/2005/TECH/09/15/katrinarobots/index.html"><em>"Robots can be lifesaving rescue workers"</em></a></div>
+                <div class="fold-meta"><p>2005</p></div>
+              </div>
+              <div class="fold-item">
+                <div class="fold-main">Linux.com - <a href="https://web.archive.org/web/20110714143849/http://linux.omnipotent.net/article.php?article_id=12547&amp;page=-1"><em>"Interview: Mark Micire of the Center for Robotic Assisted Search and Rescue"</em></a></div>
+                <div class="fold-meta"><p>2001</p></div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section aria-labelledby="search-rescue">
+        <div class="entry" id="search-rescue">
+          <div class="label">Search & Rescue</div>
+          <div class="line-main"><strong>Hurricane Responses</strong>:</div>
+          <div class="line-meta"><p>2004 - 2005</p></div>
+          <div class="desc">Operated a robot crawler to <a href=https://www.youtube.com/watch?v=EuTpUa7jgJ8>search</a> partially collapsed structures in Biloxi, Mississippi, in the aftermath of Hurricane Katrina. Hurricane deployments include Charlie in Punta Gorda, Florida; Ivan in Perdido Key, Florida; Jeanne in Tampa, Florida; Frances in Polk County, Florida; Dennis in Destin, Florida; Katrina in Biloxi, Mississippi; and Wilma in Naples, Florida. Provided search capabilities in buildings that would not otherwise be safe for occupancy.</div>
+          <div class="line-main"><strong>World Trade Center Disaster Response</strong>:</div>
+          <div class="line-meta"><p>11 Sep. 2001</p></div>
+          <div class="desc"><p>Served as robot operator on rubble piles for eleven days after the towers' collapse. Assisted FEMA and the Fire Department of New York, conducting response operations tasks for the Center for Robot-Assisted Search and Rescue (CRASAR).</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="search-rescue-experience">
+        <div class="entry" id="search-rescue-experience">
+          <div class="label">Search & Rescue
+Experience</div>
+          <div class="line-main"><strong>Technical Information Specialist, California Task Force Three (CA-TF3)</strong><br>Federal Emergency Management Agency (FEMA) US&amp;R, Menlo Park Fire Protection District, CA</div>
+          <div class="line-meta"><p>2018 - 2019</p></div>
+          <div class="desc"><p>Served as a specialist in technical search camera, acoustic, and robotic technologies.  Served as a subject matter expert for the FEMA Data Analytics Ad Hoc Group.  Contributed to the National Strategy on Advancing US National Grid and GIS for Search and Rescue.</p></div>
+          <div class="line-main"><strong>Technical Search Specialist, California Task Force Three (CA-TF3)</strong><br>Federal Emergency Management Agency (FEMA) US&amp;R, Menlo Park Fire Protection District, CA</div>
+          <div class="line-meta"><p>2011 - 2015</p></div>
+          <div class="desc"><p>Served in team position as a specialist in technical search camera, acoustic, and robotic technologies.  Evaluated robotic equipment as Department of Homeland Security (DHS) subject matter expert.  Served as subject matter expert for the FEMA Search Information Standardization Ad Hoc Group.</p></div>
+          <div class="line-main"><strong>Technical Search Specialist, Massachusetts Task Force One (MA-TF1)</strong><br>Federal Emergency Management Agency (FEMA) US&amp;R, City of Beverly, MA</div>
+          <div class="line-meta"><p>2007 - 2010</p></div>
+          <div class="desc"><p>Served in team position as a specialist in technical search camera, acoustic, and robotic technologies.  Cross-trained in Technical Information Specialist and Communications roles. Represented team as chair of Safety Working Group in support of ASTM International Task Group E54.08.01 on Performance Measures for Robots for Urban Search and Rescue.</p></div>
+          <div class="line-main"><strong>Technical Search Specialist, Florida Regional Task Force Three (FL-TF3)</strong><br>Hillsborough County Fire Rescue, Special Operations, Tampa, FL</div>
+          <div class="line-meta"><p>2003 - 2007</p></div>
+          <div class="desc"><p>Deployed to seven incidents during the 2004-2005 hurricane season, including a multi-state response to Biloxi, Mississippi, after Hurricane Katrina.  Served in team position for search cameras and acoustic detection,<br>including robot crawlers for confined space reconnaissance and monitoring.</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="certifications">
+        <div class="entry" id="certifications">
+          <div class="label">Certifications</div>
+          <div class="line-main"><p>Technical Information Specialist - FEMA</p></div>
+          <div class="line-meta"><p>2018</p></div>
+          <div class="line-main"><p>Weapons of Mass Destruction: Ops in a Contaminated Environment - FEMA, CATF-3</p></div>
+          <div class="line-meta"><p>2013</p></div>
+          <div class="line-main"><p>Technical Search Specialist - FEMA</p></div>
+          <div class="line-meta"><p>2010</p></div>
+          <div class="line-main"><p>Rope Technician Level I and II - FEMA, MATF-1</p></div>
+          <div class="line-meta"><p>2009</p></div>
+          <div class="line-main"><p>Inland Search and Rescue Planning - United States Coast Guard National SAR School</p></div>
+          <div class="line-meta"><p>2009</p></div>
+          <div class="line-main"><p>Hazmat Operations - FEMA, MATF-1</p></div>
+          <div class="line-meta"><p>2009</p></div>
+          <div class="line-main"><p>C-130 military aircraft pallet packing operations - FEMA, MATF-1</p></div>
+          <div class="line-meta"><p>2008</p></div>
+          <div class="line-main"><p>General Level Amateur Radio License (License KB1RBA) - FCC</p></div>
+          <div class="line-meta"><p>2008</p></div>
+          <div class="line-main"><p>Confined Space Rescue Technician - Hillsborough County Fire Rescue</p></div>
+          <div class="line-meta"><p>2006</p></div>
+          <div class="line-main"><p>Chemical Biological Incident Response Force Basic Training - US Marine Corps</p></div>
+          <div class="line-meta"><p>2002</p></div>
+          <div class="line-main"><p>HazMat Incident Response, Operations - US Marine Corps</p></div>
+          <div class="line-meta"><p>2002</p></div>
+          <div class="desc"><strong>Additional certifications or proof of certification available upon request.</strong></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="obsessions">
+        <div class="entry entry--two" id="obsessions">
+          <div class="label">Obsessions</div>
+          <div class="line-main">Automobile photography, restoration, and modification - <a href="https://www.elferspot.com/en/magazin/life-is-too-short-to-drive-boring-cars/">Elferspot</a></div>
+          <div class="desc">Competitive powerlifting - <a href="https://www.openpowerlifting.org/u/markmicire">OpenPowerlifting</a></div>
+          <div class="desc"><strong>Additional obsessions available during casual conversation.</strong></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>
